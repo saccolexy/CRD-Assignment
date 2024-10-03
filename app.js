@@ -22,16 +22,20 @@ function displayUsers(users) {
   const userList = document.getElementById('userList');
   userList.innerHTML = ''; // Clear the user list
 
-  // Loop through users and create a list item for each
   users.forEach(user => {
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
     li.innerHTML = `
-      ${user.name} (${user.email})
-      <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+        ${user.name} (${user.email})
     `;
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => deleteUser(user.id)); // Bind the function here
+    li.appendChild(deleteButton); // Append the button to the list item
     userList.appendChild(li); // Append the user to the list
-  });
+});
+
 }
 
 // Function to handle form submission to create a new user
@@ -42,10 +46,7 @@ document.getElementById('userForm').addEventListener('submit', async (e) => {
   const email = document.getElementById('email').value;
 
   // Create a new user object
-  const newUser = {
-    name,
-    email
-  };
+  const newUser = { name, email };
 
   try {
     // Send a POST request to create the new user
@@ -58,8 +59,11 @@ document.getElementById('userForm').addEventListener('submit', async (e) => {
     });
 
     // If the request is successful, fetch and display the updated user list
-    const createdUser = await response.json();
-    fetchUsers();
+    if (response.ok) {
+      fetchUsers(); // Refresh user list
+    } else {
+      console.error('Error adding user:', response.statusText);
+    }
 
   } catch (error) {
     console.error('Error adding user:', error);
@@ -72,15 +76,18 @@ document.getElementById('userForm').addEventListener('submit', async (e) => {
 
 // Function to delete a user
 async function deleteUser(id) {
+  console.log('Deleting user with ID:', id); // Check the id being deleted
   try {
-    // Send a DELETE request to remove the user with the given ID
-    await fetch(`${apiUrl}/${id}`, {
-      method: 'DELETE'
+    const response = await fetch(`${apiUrl}/${id}`, {
+      method: 'DELETE',
     });
-    
-    // Fetch and display the updated list of users after deletion
-    fetchUsers();
+
+    if (response.ok) {
+      fetchUsers(); // Refresh user list
+    } else {
+      console.error("Error deleting user:", response.statusText);
+    }
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error("Error deleting user:", error);
   }
 }
